@@ -1,0 +1,29 @@
+program AgrupacionesAutomaticas;
+
+//{$APPTYPE CONSOLE}
+{$APPTYPE GUI}
+
+{$R *.res}
+
+uses
+  System.SysUtils,
+  DmControl in 'DmControl.pas' {dmdControl: TDataModule},
+  IniDataModule in '..\..\..\comun\modulos\IniDataModule.pas' {dmIniDataModule: TDataModule},
+  SQLServerDataModule in '..\..\..\comun\modulos\SQLServerDataModule.pas' {dmSQLServerDataModule: TDataModule},
+  DmDatos in 'Datos\DmDatos.pas' {dmdDatos: TDataModule};
+
+var
+  dmdControl: TdmdControl;
+begin
+try
+    dmdControl := TdmdControl.Create(nil);
+    try
+      dmdControl.EjecutarAgrupaciones; // tu lógica principal
+    finally
+      dmdControl.Free;
+    end;
+  except
+    on E: Exception do
+      Writeln('Error: ', E.ClassName, ': ', E.Message);
+  end;
+end.

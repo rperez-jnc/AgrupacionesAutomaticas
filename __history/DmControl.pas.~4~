@@ -1,0 +1,105 @@
+unit DmControl;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, IniFiles, JncLib, JncLog, DmDatos, Dialogs;
+
+type
+    ENoPuedeAbrirLog = class(Exception)
+  end;
+  TdmdControl = class(TDataModule)
+  private
+    FLog: TJncLog;
+    FNombreArchivoLog: string;
+    FBd: TDmdDatos;
+
+    { Private declarations }
+  public
+    { Public declarations }
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
+    procedure CreaLog;
+    procedure LiberaLog;
+
+    procedure EjecutarAgrupaciones;
+
+    property Log: TJncLog read FLog write FLog;
+    property NombreArchivoLog: string read FNombreArchivoLog write FNombreArchivoLog;
+    property Bd: TDmdDatos read FBd write FBd;
+  end;
+
+var
+  dmdControl: TdmdControl;
+  gFicheroIni : string;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+procedure TdmdControl.CreaLog;
+begin
+   try
+
+  // Creamos un Log para poder ir almacenando las incidencias que se han ido produciendo
+    Log := TJncLog.Create(Directorioconbarra(bd.NombreArchivoLog) + bd.Usuario + 'log.ini');
+
+  except
+    on e: Exception do
+    begin
+      LiberaLog;
+      raise ENoPuedeAbrirLog.Create('No puede abrir el fichero de Log. ');
+    end;
+
+  end;
+end;
+
+constructor TdmdControl.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+   gFicheroIni := paramstr(1);
+
+   try
+
+        Bd := TdmdDatos.Create(self, gFicheroIni);
+        Bd.Conecta;
+
+   except
+       on e: Exception do
+       begin
+           Showmessage(e.Message);
+           Halt(0);
+       end;
+
+   end;
+
+   Bd.InicializaNax;
+   CreaLog;
+
+end;
+destructor TdmdControl.Destroy;
+begin
+
+  LiberaLog;
+  Bd.FinalizaNax;
+
+  inherited Destroy;
+end;
+
+
+procedure TdmdControl.EjecutarAgrupaciones;
+begin
+   bd.BuscaEfectos;
+   bd.GenerarAgrupaciones;
+end;
+
+procedure TdmdControl.LiberaLog;
+begin
+        // Libera el LOG
+  if Assigned(Log) then
+    Log.Free;
+end;
+end.

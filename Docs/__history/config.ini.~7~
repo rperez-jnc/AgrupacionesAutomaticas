@@ -1,0 +1,43 @@
+﻿;Datos para Nexus/A3Erp
+[Datos]
+;Nombre de la base de datos registrada en SQLServer
+;** Parámetro básico de configuración Nexus/A3Erp
+BaseDatos=Demo14
+
+;Nombre de la empresa registrada en Nexus/A3Erp
+;** Parámetro básico de configuración
+Empresa=Demo14
+
+;Contraseña de sa
+;** Parámetro básico de configuración con Nexus/A3Erp
+Password=w6DCocOmw6bDrsW4w6TDiA==
+
+;Instancia del servidor SQLSever
+;** Parámetro básico de configuración con Nexus/A3Erp
+Servidor=DESARROLLO-CH\A3ERP
+Server=DESARROLLO-CH
+Ip=
+
+;Base de datos de sistema de Nexus/A3Erp
+;** Parámetro básico de configuración Nexus/A3Erp
+Sistema=A3Erp$Sistema
+
+;Usuario de SQLServer
+;** Parámetro básico de configuración Nexus/A3Erp
+Usuario=sa
+
+NombreArchivoLog = E:\Repositorios\Algoratma\Matacanarias\AgrupacionesAutomaticas\Log\
+
+[Opciones]
+
+; Documento de pago sobre el que actuar
+DocPago = R2
+;Documento de pago de la agrupacion
+DocPagoAgru = 'P'
+;Codigo banco agrupacion
+CodBan = 1
+; Moneda de la agrupacion
+CodMon = EURO
+;TipoCont
+TipoCont = 1
+

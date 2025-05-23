@@ -1,0 +1,25 @@
+unit DmControl;
+
+interface
+
+uses
+  System.SysUtils, System.Classes;
+
+type
+  TdmdControl = class(TDataModule)
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  dmdControl: TdmdControl;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+end.

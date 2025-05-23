@@ -1,0 +1,9 @@
+inherited dmdDatos: TdmdDatos
+  Width = 557
+  object sqlEfectos: TADOQuery
+    Connection = Conexion
+    Parameters = <>
+    Left = 200
+    Top = 16
+  end
+end

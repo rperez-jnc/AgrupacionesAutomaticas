@@ -1,0 +1,85 @@
+unit DmControl;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, IniFiles, JncLib, JncLog, DmDatos, Dialogs, IVista;
+
+type
+
+  TdmdControl = class(TDataModule)
+  private
+    FLog: TJncLog;
+    FNombreArchivoLog: string;
+    FBd: TDmdDatos;
+
+    { Private declarations }
+  public
+    { Public declarations }
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+
+    procedure EjecutarAgrupaciones;
+
+
+    property NombreArchivoLog: string read FNombreArchivoLog write FNombreArchivoLog;
+    property Bd: TDmdDatos read FBd write FBd;
+  end;
+
+var
+  dmdControl: TdmdControl;
+  gFicheroIni : string;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+
+constructor TdmdControl.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+   gFicheroIni := paramstr(1);
+
+   try
+
+        Bd := TdmdDatos.Create(self, gFicheroIni);
+        Bd.Conecta;
+
+   except
+       on e: Exception do
+       begin
+           Showmessage(e.Message);
+           Halt(0);
+       end;
+
+   end;
+
+   Bd.InicializaNax;
+   bd.CreaLog;
+   Bd.Log.Mensaje(tmvInicio,'Iniciando creacion de agrupaciones','Iniciando creacion agrupaciones',true);
+
+
+
+end;
+destructor TdmdControl.Destroy;
+begin
+
+  Bd.Log.Mensaje(tmvFinalizacion,'Fin proceso','Fin proceso',true);
+  Bd.FinalizaNax;
+  Bd.LiberaLog;
+  if assigned(Bd) then
+     bd.Free;
+  inherited Destroy;
+end;
+
+
+procedure TdmdControl.EjecutarAgrupaciones;
+begin
+   bd.BuscaEfectos;
+   bd.GeneraAgrupaciones;
+end;
+
+
+end.

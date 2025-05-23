@@ -1,0 +1,330 @@
+unit DmDatos;
+
+interface
+
+uses
+  a3ERPActiveX_TLB,WinApi.ActiveX,System.SysUtils, System.Classes, SQLServerDataModule, Data.DB, Data.Win.ADODB,
+   JncLib, IniFiles, JncLog, IVista, JvMemoryDataset, DateUtils, Math;
+
+type
+  ENoPuedeAbrirLog = class(Exception)
+  end;
+  TdmdDatos = class(TdmSQLServerDataModule)
+    sqlEfectos: TADOQuery;
+    JvmAgrupaciones: TJvMemoryData;
+    JvmAgrupacionesNumAgru: TFloatField;
+    sqlLapsos: TADOQuery;
+  private
+    FNaxEnlace: Enlace;
+    FEmpresa: string;
+    FNombreArchivoLog: string;
+    FDocPago: string;
+    FDocPagoAgru: string;
+    FCodMon: string;
+    FTipoCont: string;
+    FCodBan: string;
+    FLog: TJncLog;
+    { Private declarations }
+  public
+    { Public declarations }
+    procedure LeeIni(vIni: TIniFile); override;
+    procedure InicializaNax;
+    procedure FinalizaNax;
+    procedure CreaLog;
+    procedure LiberaLog;
+
+    procedure BuscaEfectos;
+    procedure GeneraAgrupaciones;
+    procedure DivideVencimientos;
+    procedure BuscarCartera(vNumAgru: double;Var vNumCartera: double; Var vNumVen:integer; Var vImporteMon:double; Var vCodCli:string);
+    procedure BuscarLapsos(vCodCli:string);
+
+    property Empresa:string read FEmpresa write FEmpresa;
+    property NaxEnlace: Enlace read  FNaxEnlace write FNaxEnlace;
+    property NombreArchivoLog : string read FNombreArchivoLog write FNombreArchivoLog;
+    property DocPago : string read FDocPago write FDocPago;
+    property DocPagoAgru : string read FDocPagoAgru write FDocPagoAgru;
+    property CodBan : string read FCodBan write FCodBan;
+    property CodMon : string read FCodMon write FCodMon;
+    property TipoCont : string read FTipoCont write FTipoCont;
+    property Log: TJncLog read FLog write FLog;
+  end;
+
+var
+  dmdDatos: TdmdDatos;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+{ TdmdDatos }
+
+procedure TdmdDatos.BuscaEfectos;
+var
+  lCadena : string;
+begin
+  with sqlEfectos do
+  begin
+    close;
+    sql.Clear;
+
+    sql.Add('select cobpag,codban, codcli, codmon,docpag,EnRiesgo, EsImpagado, fecha');
+    sql.Add(' ,fechacalc, fechacalculovto, fechaefectiva, fechafactura,fechavalor');
+    sql.Add(' ,idcartera, importe, importemon, numcartera,numven,pagado, recibido, recibir, TipoCont');
+    sql.Add(' from cartera with(nolock)');
+    sql.Add(' where docpag = ' + quotedstr(cuadrasiesnumerico(DocPago,8)));
+    sql.Add(' and pagado = ''F'' and ((recibir = ''T'' and recibido = ''T'') or (recibir = ''F''))');
+    sql.Add(' and cobpag = ''C''');
+    sql.Add(' and padrereme is null');
+    sql.Add(' and EnRiesgo = ''F''');
+    sql.Add(' and EsImpagado = ''F''');
+    sql.Add(' order by codcli');
+
+    lcadena := sql.Text;
+
+    open;
+    Log.Mensaje(tmvMensaje,'Busqueda de efectos','Busqueda de efectos, se han obtenido ' + inttostr(recordcount) + ' efectos ',true);
+  end;
+end;
+
+procedure TdmdDatos.BuscarCartera(vNumAgru: double; Var vNumCartera: double;
+  Var vNumVen: integer; Var vImporteMon: double; Var vCodCli:string);
+begin
+  with sqlconsulta do
+  begin
+    close;
+    sql.Clear;
+
+    sql.Add('Select NumCartera, Numven, ImporteMon, CodCli from cartera with(nolock)');
+    sql.Add('where procede = ''AG'' and procedeid = ' + floattostr(vNumAgru));
+
+    open;
+
+    vNumCartera := fieldbyname('NumCartera').AsFloat;
+    vNumVen := fieldbyname('NumVen').AsInteger;
+    vImporteMon := fieldbyname('ImporteMon').AsFloat;
+    vCodCli := fieldbyname('CodCli').asstring;
+  end;
+end;
+
+procedure TdmdDatos.BuscarLapsos(vCodCli: string);
+begin
+  with sqllapsos do
+  begin
+    close;
+    sql.Clear;
+
+    sql.Add('Select AAA_Lapso');
+    sql.Add('From AAA_LapsosCliente with(nolock)');
+    sql.Add(' where AAA_CodCli = ' + quotedstr(cuadrasiesnumerico(vCodCli,8)));
+    sql.Add('order by AAA_Orden');
+
+    open;
+  end;
+end;
+
+procedure TdmdDatos.CreaLog;
+begin
+   try
+
+  // Creamos un Log para poder ir almacenando las incidencias que se han ido produciendo
+    Log := TJncLog.Create(Directorioconbarra(NombreArchivoLog) + Usuario + 'log.ini');
+
+  except
+    on e: Exception do
+    begin
+      LiberaLog;
+      raise ENoPuedeAbrirLog.Create('No puede abrir el fichero de Log. ');
+    end;
+
+  end;
+end;
+
+procedure TdmdDatos.DivideVencimientos;
+var
+  lNumAgru: double;
+  lNumCartera: double;
+  lNumVen : integer;
+  lImporteMon : double;
+  NaxCartera : Cartera;
+  lImporteDividido : double;
+  lFecha : TDate;
+  lCodCli : string;
+  lNumVencimientos : integer;
+  li:integer;
+  lSuma : double;
+begin
+  lNumAgru := 0;
+  lFecha := Now;
+  if JvmAgrupaciones.RecordCount > 0 then
+  begin
+    NaxCartera := coCartera.Create;
+    NaxCartera.Iniciar;
+
+    try
+        with JvmAgrupaciones do
+        begin
+          first;
+
+          while not eof do
+          begin
+            lNumAgru := fieldbyname('NumAgru').AsFloat;
+            Log.Mensaje(tmvMensaje,'Dividir agrupacion','Se va a dividir la agrupacion  ' + floattostr(lNumAgru) ,true);
+
+
+            BuscarCartera(lNumAgru, lNumCartera, lNumVen, lImporteMon, lCodCli);
+            //Buscamos los lapsos para dividir
+            Buscarlapsos(lCodCli);
+            Log.Mensaje(tmvMensaje,'Importe agrupacion','Importe de la agrupacion  ' + floattostr(lImporteMon) ,true);
+            sqllapsos.First;
+            lNumVencimientos := sqllapsos.recordcount;
+            Log.Mensaje(tmvMensaje,'Número vencimientos','Número vencimientos: ' + inttostr(lNumVencimientos) ,true);
+            if lNumVencimientos > 0 then
+            begin
+                  li:= 0;
+                  lSuma := 0;
+                  lImporteDividido := roundto(lImporteMon /lNumVencimientos,-2);
+                  with sqlLapsos do
+                  begin
+                     NaxCartera.Modifica(lNumCartera); //Al modificar la cartera ya se borrarn los vencimientos
+                     while not eof do
+                     begin
+                      li := li + 1;
+                      if li =  lNumVencimientos then
+                          lImporteDividido := roundto(lImporteMon - lSuma,-2); //En el último restamos para que ponga el resto, por si hay descuadre con redondeos
+                      lSuma := lSuma + lImporteDividido;
+                      Log.Mensaje(tmvMensaje,'Dias Lapso','Dias lapso  ' + inttostr(fieldbyname('aaa_lapso').AsInteger) ,true);
+                      lFecha := IncDay(lFecha + fieldbyname('aaa_lapso').AsInteger);
+
+                      NaxCartera.NuevoVen(Datetostr(lFecha), lImporteDividido);
+                      NaxCartera.AnadirVen;
+                      Log.Mensaje(tmvMensaje,'Creado vencimiento','Creado vencimiento a fecha ' + Datetostr(lFecha) + ' con importe ' + floattostr(lImporteDividido),true);
+
+                      Next;
+                     end;
+
+                  end;
+
+                 NaxCartera.Anade;
+                 Log.Mensaje(tmvMensaje,'Fin division',' Fin Division',true);
+
+            end
+            else
+              Log.Mensaje(tmvMensaje,'No lapsos','No se ha dividido el vencimiento porque el cliente no tiene definidos lapsos de tiempo  ' + floattostr(lNumAgru) ,true);
+            next;
+          end;
+        end;
+    except
+      on e:exception do
+      begin
+       Log.Mensaje(tmvError,'Error','Error al dividir la agrupacion  ' + floattostr(lNumAgru) + ' : ' + e.Message,true);
+      end;
+
+    end;
+
+    NaxCartera.Acabar;
+  end;
+end;
+
+procedure TdmdDatos.FinalizaNax;
+begin
+  if Assigned(NaxEnlace) then
+  begin
+     NaxEnlace.acabar;
+     NaxEnlace:= Nil;
+     CoUninitialize;
+  end;
+end;
+
+procedure TdmdDatos.GeneraAgrupaciones;
+var
+  lCodCli, lCodCliAnt: string;
+  NaxAgrupacion: agrupacion;
+  lNumAgru : double;
+begin
+  JvmAgrupaciones.Close;
+  JvmAgrupaciones.Open;
+  NaxAgrupacion := coAgrupacion.Create;
+  NaxAgrupacion.Iniciar;
+  try
+      with sqlEfectos do
+      begin
+        first;
+        lCodCliAnt := '';
+        while not eof do
+        begin
+
+           lCodCli := Fieldbyname('CodCli').AsString;
+
+           if lCodCli <> lCodCliAnt then
+           begin
+              //Si ya se estaba creando una agrupacion, la guardamos
+              if ((NaxAgrupacion.Estado = estM_NUEVO) or (NaxAgrupacion.Estado = ESTM_Edicion)) then
+              begin
+                 lNumAgru := NaxAgrupacion.Anade;
+                 JvmAgrupaciones.AppendRecord([lNumAgru]);
+                 Log.Mensaje(tmvMensaje,'Agrupacion creada','Se ha creado la agrupacion ' + floattostr(lNumAgru),true);
+              end;
+              Log.Mensaje(tmvMensaje,'Creando agrupacion','Creando agrupacion para el cliente ' + lCodCli,true);
+              NaxAgrupacion.Nueva(True,datetostr(Now),datetostr(Now),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
+                                  CodBan, CodMon, TipoCont);
+           end;
+           NaxAgrupacion.AnadirEfecto(fieldbyname('NumCartera').AsFloat, fieldbyname('Numven').AsInteger);
+
+           lCodCliAnt := lCodCli;
+          next;
+        end;
+        //Guardamos la última agrupacion
+        if ((NaxAgrupacion.Estado = estM_NUEVO) or (NaxAgrupacion.Estado = ESTM_Edicion)) then
+        begin
+            lNumAgru := NaxAgrupacion.Anade;
+            JvmAgrupaciones.AppendRecord([lNumAgru]);
+            Log.Mensaje(tmvMensaje,'Agrupacion creada','Se ha creado la agrupacion ' + floattostr(lNumAgru) + lCodCli,true);
+        end;
+      end;
+  except
+    on e:exception do
+    begin
+       Log.Mensaje(tmvError,'Error','Error al crear agrupacion para el cliente ' + lCodCli + ' : ' + e.Message,true);
+    end;
+
+  end;
+  NaxAgrupacion.acabar;
+end;
+
+procedure TdmdDatos.InicializaNax;
+begin
+   CoInitialize(Nil);
+    NaxEnlace := CoEnlace.Create;
+
+    NaxEnlace.RaiseOnException := True;
+    NaxEnlace.LoginUsuario(Usuario,Clave);
+    NaxEnlace.Iniciar(Empresa,'');
+
+    NaxEnlace.VerBarraDeProgreso := True;
+end;
+
+procedure TdmdDatos.LeeIni(vIni: TIniFile);
+begin
+  inherited;
+  Empresa := vIni.ReadString('Datos','Empresa','');
+  NombreArchivoLog := vIni.ReadString('Datos','NombreArchivoLog','');
+  DocPago := vIni.ReadString('Opciones','DocPago','');
+  DocPagoAgru := vIni.ReadString('Opciones','DocPagoAgru','');
+  CodBan := vIni.ReadString('Opciones','CodBan','');
+  CodMon := vIni.ReadString('Opciones','CodMon','');
+  TipoCont := vIni.ReadString('Opciones','TipoCont','');
+
+end;
+
+
+procedure TdmdDatos.LiberaLog;
+begin
+        // Libera el LOG
+  if Assigned(Log) then
+    Log.Free;
+end;
+
+end.

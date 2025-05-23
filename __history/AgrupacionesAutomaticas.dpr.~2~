@@ -1,0 +1,26 @@
+program AgrupacionesAutomaticas;
+
+{$APPTYPE CONSOLE}
+
+{$R *.res}
+
+uses
+  System.SysUtils,
+  DmControl in 'DmControl.pas' {dmdControl: TDataModule};
+
+
+var
+  dmdControl: TdmdControl;
+begin
+try
+    dmdControl := TdmdControl.Create(nil);
+    try
+      dmdControl.EjecutarAgrupaciones; // tu lógica principal
+    finally
+      dmdControl.Free;
+    end;
+  except
+    on E: Exception do
+      Writeln('Error: ', E.ClassName, ': ', E.Message);
+  end;
+end.
