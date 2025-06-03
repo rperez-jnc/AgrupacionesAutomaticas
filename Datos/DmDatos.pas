@@ -78,7 +78,7 @@ begin
     sql.Add(' and pagado = ''F'' and ((recibir = ''T'' and recibido = ''T'') or (recibir = ''F''))');
     sql.Add(' and cobpag = ''C''');
     sql.Add(' and padrereme is null');
-    sql.Add(' and EnRiesgo = ''F''');
+  //  sql.Add(' and EnRiesgo = ''F''');
     sql.Add(' and EsImpagado = ''F''');
     sql.Add(' and Procede <> ''AG''');
     sql.Add(' order by codcli');
