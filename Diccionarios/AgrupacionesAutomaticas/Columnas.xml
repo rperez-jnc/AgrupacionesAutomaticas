@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <DATAPACKET Version="2.0">
+<METADATA>
+<FIELDS>
+<FIELD attrname="Tabla" fieldtype="string.uni" WIDTH="200"/>
+<FIELD attrname="Columna" fieldtype="string.uni" WIDTH="200"/>
+<FIELD attrname="Tipo" fieldtype="string.uni" WIDTH="32"/>
+<FIELD attrname="Longitud" fieldtype="i4"/>
+<FIELD attrname="Escala" fieldtype="i4"/>
+<FIELD attrname="PermiteNulos" fieldtype="boolean"/>
+<FIELD attrname="DBDefault" fieldtype="string.uni" WIDTH="200"/>
+<FIELD attrname="Cuadrado" fieldtype="boolean"/>
+<FIELD attrname="Descripcion" fieldtype="string.uni" WIDTH="300"/>
+<FIELD attrname="ValoresPosibles" fieldtype="string.uni" WIDTH="200"/>
+<FIELD attrname="Defecto" fieldtype="string.uni" WIDTH="60"/>
+<FIELD attrname="Version" fieldtype="string.uni" WIDTH="10"/>
+<FIELD attrname="Revision" fieldtype="string.uni" WIDTH="10"/>
+<FIELD attrname="Parche" fieldtype="string.uni" WIDTH="10"/>
+<FIELD attrname="EsDescripcion" fieldtype="boolean"/>
+<FIELD attrname="Calculado" fieldtype="string.uni" WIDTH="2"/>
+<FIELD attrname="EnMantenimiento" fieldtype="string.uni" WIDTH="2"/>
+<FIELD attrname="Dependencia" fieldtype="string.uni" WIDTH="60"/>
+<FIELD attrname="Editor" fieldtype="i4"/>
+<FIELD attrname="OrdenCol" fieldtype="i4"/>
+<FIELD attrname="Identidad" fieldtype="boolean"/>
+<FIELD attrname="DescripcionCorta" fieldtype="string.uni" WIDTH="30"/>
+<FIELD attrname="Propiedad" fieldtype="string.uni" WIDTH="100"/>
+<FIELD attrname="Modificado" fieldtype="dateTime"/>
+<FIELD attrname="ModificadoLogico" fieldtype="dateTime"/>
+</FIELDS>
+<PARAMS/>
+</METADATA>
+<ROWDATA>
+<ROW Tabla="AAA_LAPSOSCLIENTE" Columna="AAA_CODCLI" Tipo="varchar" Longitud="8" Escala="0" PermiteNulos="FALSE" Cuadrado="TRUE" Descripcion="Cod. cliente" ValoresPosibles="" Defecto="" Version="1" Revision="0" Parche="" EsDescripcion="FALSE" Calculado="F" EnMantenimiento="T" Dependencia="" Editor="1" OrdenCol="0" Identidad="FALSE" DescripcionCorta="Cod. cliente" Propiedad="AAA_" Modificado="20250516T10:52:20000" ModificadoLogico="20250516T10:53:28000"/>
+<ROW Tabla="__CLIENTES" Columna="CODCLI" Tipo="varchar" Longitud="8" Escala="0" PermiteNulos="FALSE" Cuadrado="TRUE" Descripcion="Cod. Cliente" ValoresPosibles="" Defecto="" Version="1" Revision="0" Parche="" EsDescripcion="FALSE" Calculado="F" EnMantenimiento="F" Dependencia="" Editor="0" OrdenCol="0" Identidad="FALSE" DescripcionCorta="Cod. CLiente" Propiedad="CODCLI" Modificado="20250516T10:53:13000" ModificadoLogico="20250516T10:53:15000"/>
+<ROW Tabla="AAA_LAPSOSCLIENTE" Columna="AAA_ORDEN" Tipo="int" Longitud="4" Escala="0" PermiteNulos="FALSE" Cuadrado="FALSE" Descripcion="Orden de aplicaci&#243;n" ValoresPosibles="" Defecto="" Version="1" Revision="0" Parche="" EsDescripcion="FALSE" Calculado="F" EnMantenimiento="T" Dependencia="" Editor="1" OrdenCol="0" Identidad="FALSE" DescripcionCorta="Orden de aplica" Propiedad="AAA_ORDEN" Modificado="20250519T10:26:54000" ModificadoLogico="20250519T11:02:09000"/>
+<ROW Tabla="AAA_LAPSOSCLIENTE" Columna="AAA_LAPSO" Tipo="int" Longitud="4" Escala="0" PermiteNulos="TRUE" Cuadrado="FALSE" Descripcion="D&#237;as lapso" ValoresPosibles="" Defecto="" Version="1" Revision="0" Parche="" EsDescripcion="FALSE" Calculado="F" EnMantenimiento="T" Dependencia="" Editor="1" OrdenCol="0" Identidad="FALSE" DescripcionCorta="D&#237;as lapso" Propiedad="AAA_LAPSO" Modificado="20250516T10:54:24000" ModificadoLogico="20250516T10:54:28000"/>
+</ROWDATA>
+</DATAPACKET>
