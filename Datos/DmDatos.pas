@@ -186,6 +186,7 @@ begin
             begin
                   li:= 0;
                   lSuma := 0;
+                  lFecha := Now;
                   lImporteDividido := roundto(lImporteMon /lNumVencimientos,-2);
                   with sqlLapsos do
                   begin
