@@ -41,7 +41,7 @@ constructor TdmdControl.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
    gFicheroIni := paramstr(1);
-
+   showmessage('Fichero ini:' + gFicheroIni);
    try
 
         Bd := TdmdDatos.Create(self, gFicheroIni);
@@ -78,13 +78,13 @@ end;
 
 procedure TdmdControl.EjecutarAgrupaciones;
 begin
-
+   showmessage('3');
    bd.BuscaEfectos;
-
+   showmessage('4');
    bd.GeneraAgrupaciones;
-
+   showmessage('5');
    bd.DivideVencimientos;
-
+   showmessage('6');
 end;
 
 

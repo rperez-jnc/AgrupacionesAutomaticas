@@ -3,11 +3,10 @@ unit DmControl;
 interface
 
 uses
-  System.SysUtils, System.Classes, IniFiles, JncLib, JncLog, DmDatos, Dialogs;
+  System.SysUtils, System.Classes, IniFiles, JncLib, JncLog, DmDatos, Dialogs, IVista;
 
 type
-    ENoPuedeAbrirLog = class(Exception)
-  end;
+
   TdmdControl = class(TDataModule)
   private
     FLog: TJncLog;
@@ -20,12 +19,9 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
-    procedure CreaLog;
-    procedure LiberaLog;
-
     procedure EjecutarAgrupaciones;
 
-    property Log: TJncLog read FLog write FLog;
+
     property NombreArchivoLog: string read FNombreArchivoLog write FNombreArchivoLog;
     property Bd: TDmdDatos read FBd write FBd;
   end;
@@ -40,22 +36,6 @@ implementation
 
 {$R *.dfm}
 
-procedure TdmdControl.CreaLog;
-begin
-   try
-
-  // Creamos un Log para poder ir almacenando las incidencias que se han ido produciendo
-    Log := TJncLog.Create(Directorioconbarra(bd.NombreArchivoLog) + bd.Usuario + 'log.ini');
-
-  except
-    on e: Exception do
-    begin
-      LiberaLog;
-      raise ENoPuedeAbrirLog.Create('No puede abrir el fichero de Log. ');
-    end;
-
-  end;
-end;
 
 constructor TdmdControl.Create(AOwner: TComponent);
 begin
@@ -70,35 +50,42 @@ begin
    except
        on e: Exception do
        begin
-           Showmessage(e.Message);
+
+           //Bd.Log.Mensaje(tmvError,'Error',e.Message,true);
            Halt(0);
        end;
 
    end;
 
    Bd.InicializaNax;
-   CreaLog;
+   bd.CreaLog;
+   Bd.Log.Mensaje(tmvInicio,'Iniciando creacion de agrupaciones','Iniciando creacion agrupaciones',true);
+
+
 
 end;
 destructor TdmdControl.Destroy;
 begin
 
-  LiberaLog;
+  Bd.Log.Mensaje(tmvFinalizacion,'Fin proceso','Fin proceso',true);
   Bd.FinalizaNax;
-
+  Bd.LiberaLog;
+  if assigned(Bd) then
+     bd.Free;
   inherited Destroy;
 end;
 
 
 procedure TdmdControl.EjecutarAgrupaciones;
 begin
+   showmessage('3');
    bd.BuscaEfectos;
+   showmessage('4');
+   bd.GeneraAgrupaciones;
+   showmessage('5');
+   bd.DivideVencimientos;
+   showmessage('6');
 end;
 
-procedure TdmdControl.LiberaLog;
-begin
-        // Libera el LOG
-  if Assigned(Log) then
-    Log.Free;
-end;
+
 end.

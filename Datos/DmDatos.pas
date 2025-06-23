@@ -4,7 +4,7 @@ interface
 
 uses
   a3ERPActiveX_TLB,WinApi.ActiveX,System.SysUtils, System.Classes, SQLServerDataModule, Data.DB, Data.Win.ADODB,
-   JncLib, IniFiles, JncLog, IVista, JvMemoryDataset, DateUtils, Math;
+   JncLib, IniFiles, JncLog, IVista, JvMemoryDataset, DateUtils, Math, Dialogs;
 
 type
   ENoPuedeAbrirLog = class(Exception)
@@ -81,6 +81,7 @@ begin
   //  sql.Add(' and EnRiesgo = ''F''');
     sql.Add(' and EsImpagado = ''F''');
     sql.Add(' and Procede <> ''AG''');
+    sql.Add(' and  Fecha < DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)');
     sql.Add(' order by codcli');
 
     lcadena := sql.Text;
@@ -132,6 +133,7 @@ begin
 
   // Creamos un Log para poder ir almacenando las incidencias que se han ido produciendo
     Log := TJncLog.Create(Directorioconbarra(NombreArchivoLog) + Usuario + 'log.ini');
+
 
   except
     on e: Exception do
@@ -270,7 +272,7 @@ begin
                  Log.Mensaje(tmvMensaje,'Agrupacion creada','Se ha creado la agrupacion ' + floattostr(lNumAgru),true);
               end;
               Log.Mensaje(tmvMensaje,'Creando agrupacion','Creando agrupacion para el cliente ' + lCodCli,true);
-              NaxAgrupacion.Nueva(True,datetostr(Now),datetostr(Now),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
+              NaxAgrupacion.Nueva(True,datetostr(StartOfTheMonth(Date)),DateToStr(StartOfTheMonth(Date)),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
                                   CodBan, CodMon, TipoCont);
 
            end;
@@ -299,12 +301,15 @@ end;
 
 procedure TdmdDatos.InicializaNax;
 begin
+
    CoInitialize(Nil);
     NaxEnlace := CoEnlace.Create;
 
     NaxEnlace.RaiseOnException := True;
     NaxEnlace.LoginUsuario(Usuario,Clave);
+
     NaxEnlace.Iniciar(Empresa,'');
+
 
     NaxEnlace.VerBarraDeProgreso := True;
 end;

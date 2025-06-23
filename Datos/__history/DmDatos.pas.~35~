@@ -78,8 +78,9 @@ begin
     sql.Add(' and pagado = ''F'' and ((recibir = ''T'' and recibido = ''T'') or (recibir = ''F''))');
     sql.Add(' and cobpag = ''C''');
     sql.Add(' and padrereme is null');
-    sql.Add(' and EnRiesgo = ''F''');
+  //  sql.Add(' and EnRiesgo = ''F''');
     sql.Add(' and EsImpagado = ''F''');
+    sql.Add(' and Procede <> ''AG''');
     sql.Add(' order by codcli');
 
     lcadena := sql.Text;
@@ -185,6 +186,7 @@ begin
             begin
                   li:= 0;
                   lSuma := 0;
+                  lFecha := Now;
                   lImporteDividido := roundto(lImporteMon /lNumVencimientos,-2);
                   with sqlLapsos do
                   begin
@@ -270,6 +272,7 @@ begin
               Log.Mensaje(tmvMensaje,'Creando agrupacion','Creando agrupacion para el cliente ' + lCodCli,true);
               NaxAgrupacion.Nueva(True,datetostr(Now),datetostr(Now),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
                                   CodBan, CodMon, TipoCont);
+
            end;
            NaxAgrupacion.AnadirEfecto(fieldbyname('NumCartera').AsFloat, fieldbyname('Numven').AsInteger);
 

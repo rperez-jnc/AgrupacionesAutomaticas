@@ -78,13 +78,9 @@ end;
 
 procedure TdmdControl.EjecutarAgrupaciones;
 begin
-
    bd.BuscaEfectos;
-
    bd.GeneraAgrupaciones;
-
    bd.DivideVencimientos;
-
 end;
 
 

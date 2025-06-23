@@ -17,10 +17,10 @@ var
   dmdControl: TdmdControl;
 begin
 try
-
+    showmessage('1');
     dmdControl := TdmdControl.Create(nil);
     try
-
+      showmessage('2');
       dmdControl.EjecutarAgrupaciones; // tu lógica principal
     finally
       dmdControl.Free;

@@ -4,7 +4,7 @@ interface
 
 uses
   a3ERPActiveX_TLB,WinApi.ActiveX,System.SysUtils, System.Classes, SQLServerDataModule, Data.DB, Data.Win.ADODB,
-   JncLib, IniFiles, JncLog, IVista, JvMemoryDataset, DateUtils;
+   JncLib, IniFiles, JncLog, IVista, JvMemoryDataset, DateUtils, Math, Dialogs;
 
 type
   ENoPuedeAbrirLog = class(Exception)
@@ -78,8 +78,10 @@ begin
     sql.Add(' and pagado = ''F'' and ((recibir = ''T'' and recibido = ''T'') or (recibir = ''F''))');
     sql.Add(' and cobpag = ''C''');
     sql.Add(' and padrereme is null');
-    sql.Add(' and EnRiesgo = ''F''');
+  //  sql.Add(' and EnRiesgo = ''F''');
     sql.Add(' and EsImpagado = ''F''');
+    sql.Add(' and Procede <> ''AG''');
+    sql.Add(' and  Fecha < DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)');
     sql.Add(' order by codcli');
 
     lcadena := sql.Text;
@@ -128,9 +130,10 @@ end;
 procedure TdmdDatos.CreaLog;
 begin
    try
-
+    showmessage('Log: ' + Directorioconbarra(NombreArchivoLog) + Usuario + 'log.ini');
   // Creamos un Log para poder ir almacenando las incidencias que se han ido produciendo
     Log := TJncLog.Create(Directorioconbarra(NombreArchivoLog) + Usuario + 'log.ini');
+    showmessage('Fichero creado');
 
   except
     on e: Exception do
@@ -153,7 +156,8 @@ var
   lFecha : TDate;
   lCodCli : string;
   lNumVencimientos : integer;
-
+  li:integer;
+  lSuma : double;
 begin
   lNumAgru := 0;
   lFecha := Now;
@@ -171,21 +175,33 @@ begin
           begin
             lNumAgru := fieldbyname('NumAgru').AsFloat;
             Log.Mensaje(tmvMensaje,'Dividir agrupacion','Se va a dividir la agrupacion  ' + floattostr(lNumAgru) ,true);
+
+
             BuscarCartera(lNumAgru, lNumCartera, lNumVen, lImporteMon, lCodCli);
             //Buscamos los lapsos para dividir
             Buscarlapsos(lCodCli);
-
+            Log.Mensaje(tmvMensaje,'Importe agrupacion','Importe de la agrupacion  ' + floattostr(lImporteMon) ,true);
             sqllapsos.First;
             lNumVencimientos := sqllapsos.recordcount;
+            Log.Mensaje(tmvMensaje,'Número vencimientos','Número vencimientos: ' + inttostr(lNumVencimientos) ,true);
             if lNumVencimientos > 0 then
             begin
-                  lImporteDividido := lImporteMon /lNumVencimientos;
+                  li:= 0;
+                  lSuma := 0;
+                  lFecha := Now;
+                  lImporteDividido := roundto(lImporteMon /lNumVencimientos,-2);
                   with sqlLapsos do
                   begin
                      NaxCartera.Modifica(lNumCartera); //Al modificar la cartera ya se borrarn los vencimientos
                      while not eof do
                      begin
+                      li := li + 1;
+                      if li =  lNumVencimientos then
+                          lImporteDividido := roundto(lImporteMon - lSuma,-2); //En el último restamos para que ponga el resto, por si hay descuadre con redondeos
+                      lSuma := lSuma + lImporteDividido;
+                      Log.Mensaje(tmvMensaje,'Dias Lapso','Dias lapso  ' + inttostr(fieldbyname('aaa_lapso').AsInteger) ,true);
                       lFecha := IncDay(lFecha + fieldbyname('aaa_lapso').AsInteger);
+
                       NaxCartera.NuevoVen(Datetostr(lFecha), lImporteDividido);
                       NaxCartera.AnadirVen;
                       Log.Mensaje(tmvMensaje,'Creado vencimiento','Creado vencimiento a fecha ' + Datetostr(lFecha) + ' con importe ' + floattostr(lImporteDividido),true);
@@ -256,8 +272,9 @@ begin
                  Log.Mensaje(tmvMensaje,'Agrupacion creada','Se ha creado la agrupacion ' + floattostr(lNumAgru),true);
               end;
               Log.Mensaje(tmvMensaje,'Creando agrupacion','Creando agrupacion para el cliente ' + lCodCli,true);
-              NaxAgrupacion.Nueva(True,datetostr(Now),datetostr(Now),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
+              NaxAgrupacion.Nueva(True,datetostr(StartOfTheMonth(Date)),DateToStr(StartOfTheMonth(Date)),lCodCli,cuadrasiesnumerico(DocPagoAgru,8),
                                   CodBan, CodMon, TipoCont);
+
            end;
            NaxAgrupacion.AnadirEfecto(fieldbyname('NumCartera').AsFloat, fieldbyname('Numven').AsInteger);
 
@@ -284,12 +301,17 @@ end;
 
 procedure TdmdDatos.InicializaNax;
 begin
+   showmessage('Usuario: ' + Usuario);
+   showmessage('Clave: ' + Clave);
+   showmessage('Empresa: ' + Empresa);
    CoInitialize(Nil);
     NaxEnlace := CoEnlace.Create;
 
     NaxEnlace.RaiseOnException := True;
     NaxEnlace.LoginUsuario(Usuario,Clave);
+    showmessage('Voy a iniciar');
     NaxEnlace.Iniciar(Empresa,'');
+    showmessage('Iniciado');
 
     NaxEnlace.VerBarraDeProgreso := True;
 end;
